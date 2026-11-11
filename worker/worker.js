@@ -259,7 +259,8 @@ export async function runAgent(env, history, ip, deps = {}) {
   const gemini = deps.callGemini || callGemini;
   const insert = deps.insertTicket || insertTicket;
   const contents = history.map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] }));
-  const lastUser = [...history].reverse().find((m) => m.role === "user")?.text || "";
+  // Everything the user said in this conversation, in order (not just the last reply)
+  const userText = history.filter((m) => m.role === "user").map((m) => m.text.trim()).filter(Boolean).join(" → ");
   const toolLog = [];
   let ticket = null;
 
@@ -283,7 +284,7 @@ export async function runAgent(env, history, ip, deps = {}) {
         else if (limited(`t:${ip}`, TICKETS_PER_HOUR, 3600_000)) result = { error: "Ticket limit reached. Try again later." };
         else {
           try {
-            const saved = await insert(env, cleanTicket(call.args, lastUser));
+            const saved = await insert(env, cleanTicket(call.args, userText));
             ticket = { id: saved.id, urgency: saved.urgency, priority_score: saved.priority_score };
             result = { created: true, ticket_number: saved.id };
           } catch (e) { console.error("create_ticket error", String(e)); result = { error: "The ticket system is unavailable right now." }; }

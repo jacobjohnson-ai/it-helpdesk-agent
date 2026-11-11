@@ -41,13 +41,14 @@ test("agent uses tools and opens a ticket when needed", async () => {
     { role: "model", parts: [{ text: "I opened ticket #200. A technician will follow up." }] },
   ];
   let i = 0, inserted = null;
-  const out = await runAgent({}, [{ role: "user", text: "VPN still broken after restarting" }], "1.2.3.4", {
+  const out = await runAgent({}, [{ role: "user", text: "My VPN won't connect" }, { role: "model", text: "Try restarting." }, { role: "user", text: "still broken" }], "1.2.3.4", {
     callGemini: async () => script[i++],
     insertTicket: async (env, row) => { inserted = row; return { id: 200, ...row }; },
   });
   assert.deepEqual(out.tools.map((t) => t.name), ["search_kb", "check_outages", "create_ticket"]);
   assert.equal(out.ticket.id, 200);
   assert.equal(inserted.urgency, "medium");
+  assert.equal(inserted.message, "My VPN won't connect → still broken"); // whole problem, not just "still broken"
   assert.match(out.reply, /#200/);
 });
 
