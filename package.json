@@ -1,0 +1,6 @@
+{
+  "name": "it-helpdesk-agent",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test test/agent.test.mjs" }
+}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IT Helpdesk Agent · Jacob Johnson</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed');</script>
+<style>
+:root{--bg:#0a0a0a;--card:#141414;--line:#262626;--ink:#f2f2f2;--mute:#a3a3a3;--dim:#6b6b6b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;line-height:1.55}
+@media(min-width:2200px){body{zoom:1.15}}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--card);margin:16px 0}::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:8px;border:3px solid var(--card)}::-webkit-scrollbar-button{display:none;width:0;height:0}
+html,body{height:100%}.wrap{width:90%;max-width:900px;margin:0 auto;padding:0 24px 24px;display:flex;flex-direction:column;height:100vh}header,nav,form,.note{flex:none}
+nav{display:flex;justify-content:space-between;padding:18px 0 8px}nav a{color:var(--mute);text-decoration:none;font-size:15px}nav a:hover{color:var(--ink)}
+header{padding:20px 0 18px}
+h1{font-size:clamp(24px,3vw,34px);letter-spacing:-.4px}
+header p{color:var(--mute);margin-top:6px;max-width:720px}
+.how{color:var(--mute);font-size:13.5px;margin-top:10px}
+.how b{color:var(--ink);font-weight:500}
+.chat{flex:1;min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--line);margin-top:6px}
+.log{flex:1;min-height:0;overflow-y:auto;padding:18px 12px 18px 0;display:flex;flex-direction:column;gap:18px}.log>*{flex:none}
+.msg .who{font-size:12.5px;color:var(--dim);letter-spacing:.3px;margin-bottom:3px}
+.msg .txt{white-space:pre-wrap;font-size:15.5px}
+.msg.you .txt{color:var(--ink)}
+.msg.agent .txt{color:#d4d4d4}.msg .txt b{color:var(--ink);font-weight:600}
+.steps{display:grid;gap:2px;margin-bottom:6px}
+.steps div{font-size:13px;color:var(--mute)}
+.steps div:before{content:"→ ";color:var(--dim)}
+.steps .tk{color:#4ade80}
+.try{color:var(--mute);font-size:14px}
+.try a{color:var(--ink);text-decoration:none;cursor:pointer;border-bottom:1px solid #444}
+.try a:hover{border-color:var(--ink)}
+.typing{color:var(--dim);font-size:14px}
+form{display:flex;gap:10px;border-top:1px solid var(--line);padding-top:16px}
+input{flex:1;background:#101010;border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--ink);font:inherit;font-size:15px;outline:none}
+input:focus{border-color:#555}
+button{background:#fff;color:#0a0a0a;border:0;border-radius:10px;padding:0 20px;font:inherit;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.note{color:var(--dim);font-size:12.5px;margin-top:12px}
+.embed body{background:var(--card)}.embed nav{display:none}.embed .wrap{width:100%;max-width:none;padding:8px 28px 18px;height:100vh}.embed header{padding:18px 0 12px}
+.embed input{background:#0f0f0f}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><a href="/">← Jacob Johnson</a><a href="/#projects">Projects</a></nav>
+<header>
+<h1>IT Helpdesk Agent</h1>
+<p>An AI agent for a fictional company, Northwind. Describe an IT problem and it troubleshoots with you. If it can't fix it, it opens a ticket for a technician.</p>
+<p class="how">It can use three tools: <b>search the knowledge base</b>, <b>check for outages</b>, and <b>create a ticket</b>. Tickets go to the same database as the <a href="/#projects" style="color:var(--ink)">Support Ticket Dashboard</a>.</p>
+</header>
+<div class="chat">
+<div class="log" id="log">
+<div class="msg agent"><div class="who">Agent</div><div class="txt">Hi, I'm the Northwind IT helpdesk. What's going on?</div></div>
+<div class="try" id="try">Try: <a>My VPN won't connect from home</a> · <a>I clicked a link in a weird email</a> · <a>The printer on floor 2 isn't working</a></div>
+</div>
+<form id="f"><input id="q" maxlength="600" placeholder="Describe your IT problem…" autocomplete="off"><button id="b">Send</button></form>
+<p class="note">Demo with a fictional company. Don't enter real passwords or personal info. Limited to a few messages per minute.</p>
+</div>
+</div>
+<script>
+var API='https://it-helpdesk-agent.jacobjohnson-ai.workers.dev';
+var hist=[],busy=false,log=document.getElementById('log'),q=document.getElementById('q'),b=document.getElementById('b');
+var STEP={search_kb:function(a,r){return 'Searched the knowledge base'+(r&&r.found?': '+r.articles[0].title:' (no match)')},
+ check_outages:function(a,r){return 'Checked for outages'+(r&&r.outages&&r.outages.length?': '+r.outages[0].note.split('.')[0]:': none found')},
+ create_ticket:function(a,r){return r&&r.created?'Created ticket #'+r.ticket_number:'Tried to create a ticket: '+((r&&r.error)||'failed')}};
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function fmt(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|\s)\*(\S[^*]*?)\*(?=\s|$|[.,!?])/g,'$1$2')}
+function add(who,text,tools){var d=document.createElement('div');d.className='msg '+(who==='You'?'you':'agent');
+ var h='<div class="who">'+who+'</div>';
+ if(tools&&tools.length){h+='<div class="steps">'+tools.map(function(t){var f=STEP[t.name];var s=f?f(t.args,t.result):t.name;return '<div'+(t.name==='create_ticket'&&t.result&&t.result.created?' class="tk"':'')+'>'+esc(s)+'</div>'}).join('')+'</div>'}
+ h+='<div class="txt">'+fmt(text)+'</div>';d.innerHTML=h;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+function send(text){text=text.trim();if(!text||busy)return;var t=document.getElementById('try');if(t)t.remove();
+ busy=true;b.disabled=true;q.value='';add('You',text);hist.push({role:'user',text:text});
+ var w=document.createElement('div');w.className='typing';w.textContent='Agent is working…';log.appendChild(w);log.scrollTop=log.scrollHeight;
+ fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-14)})})
+ .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+ .then(function(x){w.remove();if(!x.ok){add('Agent',x.j.error||'Something went wrong.');hist.pop();return}
+  add('Agent',x.j.reply,x.j.tools);hist.push({role:'model',text:x.j.reply})})
+ .catch(function(){w.remove();hist.pop();add('Agent','The agent is unavailable right now. Please try again in a minute.')})
+ .finally(function(){busy=false;b.disabled=false;q.focus()})}
+document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();send(q.value)});
+document.querySelectorAll('#try a').forEach(function(a){a.addEventListener('click',function(){send(a.textContent)})});
+</script>
+</body>
+</html>

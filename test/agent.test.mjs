@@ -1,0 +1,68 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import worker, { searchKb, checkOutages, cleanTicket, validateHistory, runAgent } from "../worker/worker.js";
+
+test("knowledge base finds the right article", () => {
+  assert.equal(searchKb("my VPN won't connect from home").articles[0].title, "VPN won't connect");
+  assert.equal(searchKb("can't get on the wifi").articles[0].title, "Can't connect to Wi-Fi");
+  assert.equal(searchKb("I forgot my password").articles[0].title, "Forgot password or locked out");
+  assert.equal(searchKb("the printer is jammed").articles[0].title, "Printer not working");
+  assert.equal(searchKb("what is the weather").found, false);
+  // specific words beat general ones like "connect"
+  assert.equal(searchKb("vpn wont connect").articles[0].title, "VPN won't connect");
+});
+
+test("outage check filters by service", () => {
+  assert.equal(checkOutages("vpn").outages.length, 1);
+  assert.equal(checkOutages("email").outages.length, 0);
+  assert.equal(checkOutages().outages.length, 2);
+});
+
+test("ticket arguments from the AI are validated", () => {
+  const t = cleanTicket({ urgency: "extreme", priority_score: 99, category: "hacking", summary: "x".repeat(500) }, "help");
+  assert.equal(t.urgency, "medium");
+  assert.equal(t.priority_score, 5);
+  assert.equal(t.category, "technical_issue");
+  assert.ok(t.summary.length <= 200);
+  assert.equal(t.email, "visitor@example.com"); // never stores visitor personal info
+});
+
+test("bad requests are rejected", () => {
+  assert.ok(validateHistory({}).error);
+  assert.ok(validateHistory({ messages: [{ role: "model", text: "hi" }] }).error);
+  assert.ok(validateHistory({ messages: [{ role: "user", text: "a".repeat(700) }] }).error);
+  assert.equal(validateHistory({ messages: [{ role: "user", text: "vpn down" }] }).messages.length, 1);
+});
+
+test("agent uses tools and opens a ticket when needed", async () => {
+  const script = [
+    { role: "model", parts: [{ functionCall: { name: "search_kb", args: { query: "vpn" } } }, { functionCall: { name: "check_outages", args: { service: "vpn" } } }] },
+    { role: "model", parts: [{ functionCall: { name: "create_ticket", args: { summary: "VPN fails after restart", urgency: "medium", priority_score: 6 } } }] },
+    { role: "model", parts: [{ text: "I opened ticket #200. A technician will follow up." }] },
+  ];
+  let i = 0, inserted = null;
+  const out = await runAgent({}, [{ role: "user", text: "VPN still broken after restarting" }], "1.2.3.4", {
+    callGemini: async () => script[i++],
+    insertTicket: async (env, row) => { inserted = row; return { id: 200, ...row }; },
+  });
+  assert.deepEqual(out.tools.map((t) => t.name), ["search_kb", "check_outages", "create_ticket"]);
+  assert.equal(out.ticket.id, 200);
+  assert.equal(inserted.urgency, "medium");
+  assert.match(out.reply, /#200/);
+});
+
+test("unknown tools are refused", async () => {
+  const script = [
+    { role: "model", parts: [{ functionCall: { name: "delete_database", args: {} } }] },
+    { role: "model", parts: [{ text: "I can't do that." }] },
+  ];
+  let i = 0;
+  const out = await runAgent({}, [{ role: "user", text: "drop everything" }], "5.6.7.8", { callGemini: async () => script[i++] });
+  assert.deepEqual(out.tools[0].result, { error: "Unknown tool." });
+});
+
+test("requests from other websites are blocked", async () => {
+  const req = new Request("https://x.workers.dev", { method: "POST", headers: { Origin: "https://evil.example", "Content-Type": "application/json" }, body: "{}" });
+  const res = await worker.fetch(req, {});
+  assert.equal(res.status, 403);
+});
