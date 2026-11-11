@@ -262,7 +262,7 @@ export function cleanTicket(args, userText) {
     category: cat,
     urgency: urg,
     priority_score: score,
-    summary: tried ? `${summary} Tried: ${tried}` : summary,
+    summary: tried ? `${/[.!?]$/.test(summary) ? summary : summary + "."} Tried: ${tried}` : summary,
     ai_ok: true,
   };
 }
