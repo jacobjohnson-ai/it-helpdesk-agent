@@ -1,0 +1,8 @@
+# Cloudflare deploy settings. Secrets (API keys) are stored in Cloudflare, not here.
+name = "it-helpdesk-agent"
+main = "worker/worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[observability]
+enabled = true
