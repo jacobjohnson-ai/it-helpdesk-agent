@@ -121,3 +121,39 @@ test("ticket lookup returns status without personal info", async () => {
   assert.equal(asked, 164);
   assert.equal(out.tools[0].result.found, true);
 });
+
+test("signed-in user: ticket opens under their account without asking for details", async () => {
+  let saved;
+  const calls = [
+    { role: "model", parts: [{ functionCall: { name: "create_ticket", args: { summary: "Laptop screen flickers", urgency: "medium", priority_score: 5 } } }] },
+    { role: "model", parts: [{ text: "Done, ticket #500." }] },
+  ];
+  const user = { id: "11111111-2222-3333-4444-555555555555", full_name: "Riley Carter", department: "Sales", role: "employee" };
+  const out = await runAgent({}, [{ role: "user", text: "my screen flickers, please get a technician" }], "u:test1", {
+    user, callGemini: async () => calls.shift(), resolutionNote: async () => null,
+    insertTicket: async (_env, row) => { saved = row; return { id: 500, ...row }; },
+  });
+  assert.equal(out.ticket.id, 500);
+  assert.equal(saved.requester_id, user.id);
+  assert.equal(saved.name, "Riley Carter");
+  assert.equal(saved.email, "riley.carter@northwind.example");
+  assert.equal(out.needs_details, false);
+});
+
+test("signed-in user can't look up someone else's ticket", async () => {
+  const calls = [
+    { role: "model", parts: [{ functionCall: { name: "check_ticket", args: { ticket_number: 7 } } }] },
+    { role: "model", parts: [{ text: "ok" }] },
+  ];
+  const out = await runAgent({}, [{ role: "user", text: "status of ticket 7" }], "u:test2", {
+    user: { id: "a", full_name: "Riley Carter" }, callGemini: async () => calls.shift(),
+    fetchTicket: async () => ({ id: 7, requester_id: "someone-else", status: "open" }),
+  });
+  assert.equal(out.tools[0].result.found, false);
+});
+
+test("search uses the database article list when given", () => {
+  const kb = [{ id: "badge", title: "Door badge not working", keywords: ["badge", "door"], steps: ["Hold the badge flat."] }];
+  assert.equal(searchKb("my badge won't open the door", null, kb).articles[0].title, "Door badge not working");
+  assert.equal(searchKb("", "badge", kb).found, true);
+});
