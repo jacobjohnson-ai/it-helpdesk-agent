@@ -43,7 +43,7 @@ test("agent uses tools and opens a ticket when needed", async () => {
     { role: "model", parts: [{ text: "I opened ticket #200. A technician will follow up." }] },
   ];
   let i = 0, inserted = null;
-  const out = await runAgent({}, [{ role: "user", text: "My VPN won't connect" }, { role: "model", text: "Try restarting." }, { role: "user", text: "still broken" }], "1.2.3.4", {
+  const out = await runAgent({}, [{ role: "user", text: "My VPN won't connect" }, { role: "model", text: "Try restarting." }, { role: "user", text: "still broken. Alex Rivera, Sales, nw-10482" }], "1.2.3.4", {
     callGemini: async () => script[i++],
     insertTicket: async (env, row) => { inserted = row; return { id: 200, ...row }; },
     resolutionNote: async () => "Restarted the VPN client and renewed the certificate.",
@@ -53,7 +53,7 @@ test("agent uses tools and opens a ticket when needed", async () => {
   assert.deepEqual(out.tools.map((t) => t.name), ["search_kb", "check_outages", "create_ticket"]);
   assert.equal(out.ticket.id, 200);
   assert.equal(inserted.urgency, "medium");
-  assert.equal(inserted.message, "My VPN won't connect → still broken"); // whole problem, not just "still broken"
+  assert.equal(inserted.message, "My VPN won't connect → still broken. Alex Rivera, Sales, nw-10482"); // whole conversation
   assert.equal(inserted.name, "Alex Rivera");
   assert.equal(inserted.department, "Sales");
   assert.equal(inserted.employee_id, "NW-10482");
@@ -77,8 +77,11 @@ test("requests from other websites are blocked", async () => {
 });
 
 test("requester details are required and checked", async () => {
-  assert.deepEqual(requesterProblems({ requester_name: "Alex Rivera", department: "Sales", employee_id: "NW-10482" }), []);
-  assert.equal(requesterProblems({ requester_name: "Alex", department: "Legal", employee_id: "123-45-6789" }).length, 2); // bad dept, SSN-looking ID
+  const said = "my name is Alex Rivera, Sales, NW-10482";
+  assert.deepEqual(requesterProblems({ requester_name: "Alex Rivera", department: "Sales", employee_id: "NW-10482" }, said), []);
+  // the AI made up an ID the user never typed: blocked
+  assert.deepEqual(requesterProblems({ requester_name: "test name", department: "HR", employee_id: "NW-12345" }, "name: test name / department: HR"), ["employee ID (format NW-12345)"]);
+  assert.equal(requesterProblems({ requester_name: "Alex", department: "Legal", employee_id: "123-45-6789" }, "Alex, Legal, 123-45-6789").length, 2); // bad dept, SSN-looking ID
   const script = [
     { role: "model", parts: [{ functionCall: { name: "create_ticket", args: { summary: "Printer down", urgency: "low", priority_score: 3 } } }] },
     { role: "model", parts: [{ text: "Can I get your name, department, and employee ID?" }] },

@@ -223,12 +223,16 @@ export function checkOutages(service) {
 }
 
 // Check the requester details. Returns the list of what's missing or invalid.
-export function requesterProblems(args) {
+// The details must be valid AND must actually appear in what the user typed,
+// so the AI can't invent an employee ID or department to get a ticket through.
+export function requesterProblems(args, userText = "") {
   const out = [];
+  const said = String(userText).toLowerCase();
   const name = String(args?.requester_name || "").trim();
-  if (!/^[A-Za-z][A-Za-z .'-]{1,59}$/.test(name)) out.push("name");
-  if (!DEPARTMENTS.includes(args?.department)) out.push("department (one of: " + DEPARTMENTS.join(", ") + ")");
-  if (!/^NW-\d{5}$/.test(String(args?.employee_id || "").trim().toUpperCase())) out.push("employee ID (format NW-12345)");
+  const id = String(args?.employee_id || "").trim().toUpperCase();
+  if (!/^[A-Za-z][A-Za-z .'-]{1,59}$/.test(name) || !said.includes(name.toLowerCase())) out.push("name");
+  if (!DEPARTMENTS.includes(args?.department) || !said.includes(String(args.department).toLowerCase())) out.push("department (one of: " + DEPARTMENTS.join(", ") + ")");
+  if (!/^NW-\d{5}$/.test(id) || !said.includes(id.toLowerCase())) out.push("employee ID (format NW-12345)");
   return out;
 }
 
@@ -267,7 +271,7 @@ How to work:
 - If the problem could be an outage (VPN, Wi-Fi, email, printer), also call check_outages.
 - Give the steps from the knowledge base, then ask if it worked.
 - Call create_ticket only if: the steps didn't work, the user asks for a person, the problem isn't in the knowledge base, or it's a security issue (clicked a phishing link, possible hack). Security issues are always urgency "high".
-- To open a ticket you need the employee's name, department, and employee ID. If you don't have them yet, call create_ticket anyway; it will tell you what to ask for. Ask for all missing details in one short message, and mention this is a demo so made-up details are fine. Don't ask for email or phone.
+- To open a ticket you need the employee's name, department, and employee ID, exactly as the user typed them. Never guess or fill in any of them. If you don't have them yet, call create_ticket anyway; it will tell you what to ask for. Ask for all missing details in one short message, and mention this is a demo so made-up details are fine. Don't ask for email or phone.
 - After creating a ticket, tell the user the ticket number and that a technician will follow up.
 
 Rules:
@@ -393,7 +397,7 @@ export async function runAgent(env, history, ip, deps = {}) {
       if (call.name === "search_kb") result = searchKb(call.args?.query);
       else if (call.name === "check_outages") result = checkOutages(call.args?.service);
       else if (call.name === "create_ticket") {
-        const missing = requesterProblems(call.args);
+        const missing = requesterProblems(call.args, userText);
         if (ticket) result = { error: "A ticket was already created in this reply." };
         else if (missing.length) { needsDetails = true; result = { error: "missing_details", ask_user_for: missing, note: "This is a demo, so tell the user to use made-up details." }; }
         else if (limited(`t:${ip}`, TICKETS_PER_HOUR, 3600_000)) result = { error: "Ticket limit reached. Try again later." };
