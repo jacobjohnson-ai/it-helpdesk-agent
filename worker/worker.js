@@ -154,6 +154,99 @@ export const KB = [
       "If you already clicked a link or entered your password, this is urgent: IT needs to reset your password right away.",
     ],
   },
+  {
+    id: "access", title: "Need access to a shared drive, folder, or app",
+    keywords: ["access", "permission", "permissions", "shared", "drive", "folder", "denied", "request", "sharepoint"],
+    steps: [
+      "Access has to be approved by your manager or the owner of the folder or app, so IT can't add it on the spot.",
+      "Tell me the exact name of the folder, drive, or app, and I'll open a request ticket.",
+      "If you used to have access and it stopped, sign out and back in first, since a password change can cause this.",
+    ],
+  },
+  {
+    id: "software", title: "Install or update software",
+    keywords: ["install", "installing", "software", "program", "app", "application", "download", "license", "admin"],
+    steps: [
+      "Check the Company Portal app on your laptop. Approved software can be installed from there without IT.",
+      "If it's not in the Company Portal, it needs approval, and I can open a request ticket.",
+      "Don't download installers from websites. Unapproved software can be a security risk.",
+    ],
+  },
+  {
+    id: "meetings", title: "Teams or Zoom meeting problems",
+    keywords: ["teams", "zoom", "meeting", "call", "share", "screen share", "join", "webex"],
+    steps: [
+      "Quit Teams or Zoom completely (also from the system tray) and reopen it.",
+      "Check that the right microphone, speaker, and camera are selected in the app's settings.",
+      "Try joining from the web version or your phone to see if the problem is the app.",
+      "If screen sharing fails, check the app has screen recording permission and restart.",
+    ],
+  },
+  {
+    id: "onedrive", title: "OneDrive or file sync problems",
+    keywords: ["onedrive", "sync", "syncing", "file", "files", "cloud", "saved", "missing", "deleted", "recover"],
+    steps: [
+      "Click the OneDrive cloud icon near the clock to see if it's paused or showing an error.",
+      "Sign out of OneDrive and sign back in.",
+      "Deleted files can usually be restored from the OneDrive recycle bin for 30 days.",
+      "If a file is still missing, a technician can help restore it.",
+    ],
+  },
+  {
+    id: "lost", title: "Lost or stolen laptop or phone",
+    keywords: ["lost", "stolen", "missing laptop", "left", "theft", "stole", "misplaced"],
+    steps: [
+      "This is urgent. IT needs to lock the device and protect company data right away.",
+      "Change your Northwind password from another device.",
+      "I'll open a high-priority ticket so a technician can remotely lock and wipe the device.",
+    ],
+  },
+  {
+    id: "updates", title: "Windows update stuck or blue screen",
+    keywords: ["update", "updates", "updating", "stuck", "blue screen", "bsod", "restart loop", "crash", "error"],
+    steps: [
+      "If an update is stuck, leave the laptop plugged in for 30 minutes; big updates can be slow.",
+      "If it's frozen for over an hour, hold the power button for 10 seconds and turn it back on.",
+      "For a blue screen, write down the stop code shown on the screen, then restart.",
+      "If the blue screen happens again, it needs a technician.",
+    ],
+  },
+  {
+    id: "storage", title: "Disk full or out of storage",
+    keywords: ["storage", "disk", "space", "full", "drive full", "low space", "memory"],
+    steps: [
+      "Empty the Recycle Bin and clear your Downloads folder.",
+      "Open Settings, then System, then Storage, and run Cleanup recommendations.",
+      "Move large files to OneDrive so they don't take up space on the laptop.",
+    ],
+  },
+  {
+    id: "browser", title: "Website not loading or browser problems",
+    keywords: ["website", "browser", "chrome", "edge", "page", "site", "loading", "load", "cookies", "cache"],
+    steps: [
+      "Try the site in a private or incognito window.",
+      "Clear the browser's cache and cookies, then restart the browser.",
+      "Try a different browser (Edge or Chrome).",
+      "If one company site is down for everyone, it may be an outage.",
+    ],
+  },
+  {
+    id: "mobile", title: "Set up work email on a phone",
+    keywords: ["phone", "mobile", "iphone", "android", "cell", "outlook app", "setup", "set up"],
+    steps: [
+      "Install the Outlook app from the App Store or Google Play.",
+      "Sign in with your Northwind email and password.",
+      "Approve the sign-in in your authenticator app, and allow the app's security settings if asked.",
+    ],
+  },
+];
+
+// Safe first steps when no article matches
+export const GENERAL_STEPS = [
+  "Restart the device (a full restart, not just closing the lid).",
+  "Check for and install any pending updates.",
+  "Try the same thing on another device or in a different app or browser.",
+  "Note any error message exactly as it appears.",
 ];
 
 export const OUTAGES = [
@@ -169,13 +262,21 @@ export const DEPARTMENTS = ["Sales", "Finance", "Marketing", "Operations", "HR",
 const TOOL_DECLARATIONS = [
   {
     name: "search_kb",
-    description: "Search the IT knowledge base for fix steps. Use this before suggesting fixes.",
-    parameters: { type: "object", properties: { query: { type: "string", description: "Short description of the problem" } }, required: ["query"] },
+    description: "Get fix steps from the IT knowledge base. Pass article_id when one of the listed articles fits; otherwise pass a short query.",
+    parameters: { type: "object", properties: {
+      article_id: { type: "string", description: "ID of a listed article, like vpn or trackpad" },
+      query: { type: "string", description: "Short description of the problem" },
+    } },
   },
   {
     name: "check_outages",
     description: "Check the IT status page for known outages. Use when something might be down for everyone.",
     parameters: { type: "object", properties: { service: { type: "string", description: "Optional service name, like vpn, wifi, email, printer" } } },
+  },
+  {
+    name: "check_ticket",
+    description: "Look up an existing ticket by its number when the user asks about a ticket's status or details.",
+    parameters: { type: "object", properties: { ticket_number: { type: "integer" } }, required: ["ticket_number"] },
   },
   {
     name: "create_ticket",
@@ -200,7 +301,9 @@ const TOOL_DECLARATIONS = [
 // Common words that show up in many problems count less than specific ones.
 const GENERIC = new Set(["connect", "connection", "internet", "network", "login", "log in", "sign in", "link", "home", "remote"]);
 
-export function searchKb(query) {
+export function searchKb(query, articleId) {
+  const byId = KB.find((a) => a.id === String(articleId || "").trim().toLowerCase());
+  if (byId) return { found: true, articles: [{ title: byId.title, steps: byId.steps }] };
   const q = String(query || "").toLowerCase();
   const words = q.split(/[^a-z0-9-]+/).filter(Boolean);
   const scored = KB.map((a) => {
@@ -212,7 +315,7 @@ export function searchKb(query) {
     }
     return { a, score };
   }).filter((x) => x.score > 0).sort((x, y) => y.score - x.score).slice(0, 2);
-  if (!scored.length) return { found: false, message: "No matching article." };
+  if (!scored.length) return { found: false, message: "No matching article. Offer these general steps, then a ticket if they don't help.", general_steps: GENERAL_STEPS };
   return { found: true, articles: scored.map(({ a }) => ({ title: a.title, steps: a.steps })) };
 }
 
@@ -272,9 +375,19 @@ export function cleanTicket(args, userText) {
 // ---------------------------------------------------------------------------
 const SYSTEM = `You are the IT Helpdesk Agent for Northwind, a fictional company. You help employees fix common IT problems.
 
+Knowledge base articles (id: title):
+${KB.map((a) => `- ${a.id}: ${a.title}`).join("\n")}
+
 How to work:
 - Be brief and friendly. Plain words, no jargon. At most 4 short steps at a time.
-- Always call search_kb before suggesting fixes, but search at most twice per message. If nothing matches, say so and offer a ticket.
+- If the request is vague ("it's broken", "help", "not working"), don't guess. Ask one short question: what device or app, and what happens when they try.
+- For greetings or thanks, reply briefly without calling tools.
+- Before suggesting fixes, call search_kb with the article_id that fits best. If none fits, call it with a short query. At most twice per message.
+- If no article matches, give the general steps the tool returns, then offer a ticket.
+- If the user describes several problems, handle the most urgent one first and say you'll help with the others next.
+- If the user asks for a person or a technician, open a ticket right away.
+- If the user asks about an existing ticket, call check_ticket with its number.
+- A lost or stolen device, or a possible hack, is always urgency "high": open a ticket right away.
 - Hardware problems (trackpad, keyboard, screen, battery, sound, webcam) often need a technician. Give the quick checks first, then offer a ticket if they don't work.
 - If the problem could be an outage (VPN, Wi-Fi, email, printer), also call check_outages.
 - Give the steps from the knowledge base, then ask if it worked.
@@ -350,6 +463,30 @@ async function resolutionNote(env, summary) {
   } catch { return null; }
 }
 
+// Read one ticket back. Only non-personal fields are returned (no name, email, or message).
+async function fetchTicket(env, id) {
+  const base = String(env.SUPABASE_URL || "").trim().replace(/\/+$/, "");
+  const key = String(env.SUPABASE_SERVICE_KEY || "").trim();
+  const res = await fetch(`${base}/rest/v1/tickets?id=eq.${id}&select=id,created_at,category,urgency,priority_score,summary,department`, {
+    headers: { apikey: key, ...(key.startsWith("sb_") ? {} : { Authorization: `Bearer ${key}` }) },
+  });
+  if (!res.ok) {
+    console.error("Ticket lookup failed", res.status, (await res.text()).slice(0, 300));
+    throw new Error(`supabase ${res.status}`);
+  }
+  const [row] = await res.json();
+  return row || null;
+}
+
+export function ticketStatus(row) {
+  if (!row) return { found: false, message: "No ticket with that number." };
+  return {
+    found: true, ticket_number: row.id, opened: row.created_at, department: row.department,
+    urgency: row.urgency, priority_score: row.priority_score, summary: row.summary,
+    status: "Open, waiting for a technician (demo: nobody works these tickets)",
+  };
+}
+
 async function insertTicket(env, row) {
   const base = String(env.SUPABASE_URL || "").trim().replace(/\/+$/, "");
   const key = String(env.SUPABASE_SERVICE_KEY || "").trim();
@@ -381,6 +518,7 @@ export async function runAgent(env, history, ip, deps = {}) {
   const gemini = deps.callGemini || callGemini;
   const note = deps.resolutionNote || resolutionNote;
   const insert = deps.insertTicket || insertTicket;
+  const lookup = deps.fetchTicket || fetchTicket;
   const contents = history.map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] }));
   // Everything the user said in this conversation, in order (not just the last reply)
   const userText = history.filter((m) => m.role === "user").map((m) => m.text.trim()).filter(Boolean).join(" → ");
@@ -402,8 +540,13 @@ export async function runAgent(env, history, ip, deps = {}) {
     const responses = [];
     for (const call of calls) {
       let result;
-      if (call.name === "search_kb") result = searchKb(call.args?.query);
+      if (call.name === "search_kb") result = searchKb(call.args?.query, call.args?.article_id);
       else if (call.name === "check_outages") result = checkOutages(call.args?.service);
+      else if (call.name === "check_ticket") {
+        const n = Number.parseInt(call.args?.ticket_number, 10);
+        if (!Number.isInteger(n) || n < 1) result = { found: false, message: "That isn't a valid ticket number." };
+        else { try { result = ticketStatus(await lookup(env, n)); } catch { result = { error: "The ticket system is unavailable right now." }; } }
+      }
       else if (call.name === "create_ticket") {
         const missing = requesterProblems(call.args, userText);
         if (ticket) result = { error: "A ticket was already created in this reply." };

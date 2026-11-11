@@ -14,9 +14,11 @@ Most helpdesk requests are the same handful of issues: Wi-Fi, VPN, passwords, pr
 
 1. An employee describes a problem in the chat.
 2. The AI (Google Gemini) decides which tools to use. It can call:
-   - **`search_kb`**: searches the IT knowledge base for fix steps
+   - **`search_kb`**: gets fix steps from a 22-article IT knowledge base. The AI sees the list of articles and picks one by ID; keyword search is the backup, and if nothing matches it gets safe general steps.
    - **`check_outages`**: checks the IT status page for known outages
    - **`create_ticket`**: opens a ticket for a technician
+   - **`check_ticket`**: looks up an existing ticket's status (no names or emails are returned)
+   - If a request is vague, the agent asks a clarifying question instead of guessing. Lost or stolen devices and possible hacks are always high urgency.
 3. The agent runs the tools, reads the results, and decides the next step. A panel next to the chat shows each step live.
 4. Before opening a ticket, it asks for the employee's name, department, and employee ID (made-up in the demo; the ID must match `NW-12345`).
 5. After a ticket is saved, the panel shows the saved record and a labeled **technician simulation** (assigned, in progress, resolved) with an AI-written fix note. Nobody actually works the ticket; that part is a demo.
@@ -46,7 +48,7 @@ Most helpdesk requests are the same handful of issues: Wi-Fi, VPN, passwords, pr
 npm test
 ```
 
-8 tests cover the knowledge base search, the outage check, ticket validation, required requester details, request validation, the full agent loop (with the AI mocked), refusing unknown tools, and blocking requests from other websites.
+10 tests cover the knowledge base (picking by ID, keyword search, and the fallback steps), ticket lookups, the outage check, ticket validation, required requester details, request validation, the full agent loop (with the AI mocked), refusing unknown tools, and blocking requests from other websites.
 
 ## Files
 

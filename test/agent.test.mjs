@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import worker, { workEmail, searchKb, checkOutages, cleanTicket, validateHistory, runAgent, requesterProblems } from "../worker/worker.js";
+import worker, { workEmail, ticketStatus, GENERAL_STEPS, searchKb, checkOutages, cleanTicket, validateHistory, runAgent, requesterProblems } from "../worker/worker.js";
 
 test("knowledge base finds the right article", () => {
   assert.equal(searchKb("my VPN won't connect from home").articles[0].title, "VPN won't connect");
@@ -92,4 +92,32 @@ test("requester details are required and checked", async () => {
   const out = await runAgent({}, [{ role: "user", text: "printer broken" }], "9.9.9.9", { callGemini: async () => script[i++], insertTicket: async () => { inserted = true; return {}; } });
   assert.equal(inserted, false);        // nothing saved without details
   assert.equal(out.needs_details, true); // tells the chat to show the demo fill-ins
+});
+
+test("the AI can pick an article by id, and unknown problems get general steps", () => {
+  assert.equal(searchKb("", "lost").articles[0].title, "Lost or stolen laptop or phone");
+  assert.equal(searchKb("my laptop got stolen at the airport").articles[0].title, "Lost or stolen laptop or phone");
+  assert.equal(searchKb("need access to the finance shared drive").articles[0].title, "Need access to a shared drive, folder, or app");
+  assert.equal(searchKb("teams keeps dropping my meeting").articles[0].title, "Teams or Zoom meeting problems");
+  const none = searchKb("my stapler is jammed");
+  assert.equal(none.found, false);
+  assert.deepEqual(none.general_steps, GENERAL_STEPS);
+});
+
+test("ticket lookup returns status without personal info", async () => {
+  assert.equal(ticketStatus(null).found, false);
+  const s = ticketStatus({ id: 164, created_at: "2026-11-11T20:00:00Z", category: "technical_issue", urgency: "medium", priority_score: 5, summary: "VPN down.", department: "Sales" });
+  assert.equal(s.ticket_number, 164);
+  assert.ok(!("name" in s) && !("email" in s));
+  const script = [
+    { role: "model", parts: [{ functionCall: { name: "check_ticket", args: { ticket_number: 164 } } }] },
+    { role: "model", parts: [{ text: "Ticket #164 is open." }] },
+  ];
+  let i = 0, asked = null;
+  const out = await runAgent({}, [{ role: "user", text: "status of ticket 164?" }], "7.7.7.7", {
+    callGemini: async () => script[i++],
+    fetchTicket: async (env, id) => { asked = id; return { id, urgency: "medium", priority_score: 5, summary: "VPN down.", department: "Sales" }; },
+  });
+  assert.equal(asked, 164);
+  assert.equal(out.tools[0].result.found, true);
 });

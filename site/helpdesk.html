@@ -77,12 +77,12 @@ h1 .demo{font-size:15px;font-weight:400;color:var(--dim);letter-spacing:0;margin
 <header>
 <h1>IT Helpdesk Agent <span class="demo">demo</span></h1>
 <p>An AI agent for a fictional company, Northwind. Describe an IT problem and it troubleshoots with you. If it can't fix it, it opens a ticket for a technician.</p>
-<p class="how">It can use three tools: <b>search the knowledge base</b>, <b>check for outages</b>, and <b>create a ticket</b>. Tickets go to the same database as the <a id="dashlink" href="/dashboard.html" style="color:var(--ink)">Support Ticket Dashboard</a>.</p>
+<p class="how">It can use four tools: <b>search the knowledge base</b>, <b>check for outages</b>, <b>create a ticket</b>, and <b>look up a ticket</b>. Tickets go to the same database as the <a id="dashlink" href="/dashboard.html" style="color:var(--ink)">Support Ticket Dashboard</a>.</p>
 </header>
 <div class="main"><div class="chat">
 <div class="log" id="log">
 <div class="msg agent"><div class="who">Agent</div><div class="txt">Hi, I'm the Northwind IT helpdesk. What's going on?</div></div>
-<div class="try" id="try">Try: <a>My VPN won't connect from home</a> · <a>I clicked a link in a weird email</a> · <a>The printer on floor 2 isn't working</a></div>
+<div class="try" id="try">Try: <a>My VPN won't connect from home</a> · <a>I clicked a link in a weird email</a> · <a>I left my laptop on the train</a> · <a>What's the status of ticket #164?</a></div>
 </div>
 <form id="f"><input id="q" maxlength="600" placeholder="Describe your problem…" autocomplete="off"><button id="b">Send</button></form>
 <p class="note">Demo with a fictional company. Use made-up names and employee IDs, never real passwords or personal info. Limited to a few messages per minute.</p>
@@ -102,7 +102,7 @@ if(document.documentElement.classList.contains('embed'))document.getElementById(
 var API='https://it-helpdesk-agent.jacobjohnson-ai.workers.dev';
 var hist=[],busy=false,log=document.getElementById('log'),q=document.getElementById('q'),b=document.getElementById('b');
 var STEP={search_kb:function(a,r){return 'Searched the knowledge base'+(r&&r.found?': '+r.articles[0].title:' (no match)')},
- check_outages:function(a,r){return 'Checked for outages'+(r&&r.outages&&r.outages.length?': '+r.outages[0].note.split('.')[0]:': none found')},
+ check_ticket:function(a,r){return r&&r.found?'Looked up ticket #'+r.ticket_number:'Looked up a ticket (not found)'},check_outages:function(a,r){return 'Checked for outages'+(r&&r.outages&&r.outages.length?': '+r.outages[0].note.split('.')[0]:': none found')},
  create_ticket:function(a,r){return r&&r.created?'Created ticket #'+r.ticket_number:(r&&r.error==='missing_details'?'Needs name, department, and employee ID before opening a ticket':'Tried to create a ticket: '+((r&&r.error)||'failed'))}};
 function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function fmt(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|\s)\*(\S[^*]*?)\*(?=\s|$|[.,!?])/g,'$1$2')}
@@ -126,6 +126,7 @@ function panel(j){if(P.empty)P.empty.remove();var d=0;
  (j.tools||[]).forEach(function(t){setTimeout(function(){var r=t.result||{};
   if(t.name==='search_kb')pstep(P.steps,'ok','Searched the knowledge base',r.found?r.articles[0].title:'No matching article');
   else if(t.name==='check_outages')pstep(P.steps,'ok','Checked for outages',r.outages&&r.outages.length?r.outages[0].note.split('.')[0]:'None found');
+  else if(t.name==='check_ticket')pstep(P.steps,'ok','Looked up a ticket',r.found?'Ticket #'+r.ticket_number+' · '+r.urgency+' urgency':(r.message||r.error||'Not found'));
   else if(t.name==='create_ticket'){if(r.created){P.steps.querySelectorAll('li.wait').forEach(function(w){w.remove()});pstep(P.steps,'go','Saved to the database','Ticket #'+r.ticket_number)}else if(r.error==='missing_details')pstep(P.steps,'wait','Waiting for name, department, and employee ID');else pstep(P.steps,'','Ticket not saved',r.error)}
  },d);d+=350});
  if(j.ticket&&j.ticket.id){setTimeout(function(){showRec(j.ticket);simulate(j.resolution)},d+600)}}
