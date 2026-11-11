@@ -67,13 +67,15 @@ button:disabled{opacity:.5;cursor:default}
 .prec .sum.clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .embed .how{display:none}.embed header{padding:16px 0 10px}.embed h1{font-size:28px}.embed header p{font-size:15px;margin-top:4px}
 .psteps{gap:7px}
+.msg{max-width:82%}.msg.you{align-self:flex-end;text-align:right;max-width:70%}.msg.you .who{color:var(--mute)}.msg.you .txt{color:#fff;font-weight:500}.msg.agent .txt{color:#c8c8c8}.log{gap:22px}
+h1 .demo{font-size:15px;font-weight:400;color:var(--dim);letter-spacing:0;margin-left:6px;vertical-align:middle}
 </style>
 </head>
 <body>
 <div class="wrap">
 <nav><a href="/">← Jacob Johnson</a><a href="/#projects">Projects</a></nav>
 <header>
-<h1>IT Helpdesk Agent</h1>
+<h1>IT Helpdesk Agent <span class="demo">demo</span></h1>
 <p>An AI agent for a fictional company, Northwind. Describe an IT problem and it troubleshoots with you. If it can't fix it, it opens a ticket for a technician.</p>
 <p class="how">It can use three tools: <b>search the knowledge base</b>, <b>check for outages</b>, and <b>create a ticket</b>. Tickets go to the same database as the <a id="dashlink" href="/dashboard.html" style="color:var(--ink)">Support Ticket Dashboard</a>.</p>
 </header>
