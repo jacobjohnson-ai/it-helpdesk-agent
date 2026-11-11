@@ -236,6 +236,14 @@ export function requesterProblems(args, userText = "") {
   return out;
 }
 
+// "Alex Rivera" -> "alex.rivera@northwind.example" (never ask visitors for a real email)
+export function workEmail(name) {
+  const parts = String(name || "").toLowerCase().normalize("NFKD").replace(/[^a-z\s'-]/g, "").replace(/['-]/g, "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "visitor@northwind.example";
+  const local = parts.length === 1 ? parts[0] : `${parts[0]}.${parts[parts.length - 1]}`;
+  return `${local.slice(0, 40)}@northwind.example`;
+}
+
 // Validate the AI's ticket arguments before anything touches the database.
 export function cleanTicket(args, userText) {
   const urg = ["low", "medium", "high"].includes(args?.urgency) ? args.urgency : "medium";
@@ -247,7 +255,7 @@ export function cleanTicket(args, userText) {
   const tried = clip(args?.steps_tried, 300);
   return {
     name: clip(args?.requester_name, 60) || "Helpdesk Agent visitor",
-    email: "visitor@example.com", // never collect real emails in a public demo
+    email: workEmail(args?.requester_name), // built from the name; .example can never be a real address
     department: DEPARTMENTS.includes(args?.department) ? args.department : null,
     employee_id: String(args?.employee_id || "").trim().toUpperCase() || null,
     message: clip(userText, 600),

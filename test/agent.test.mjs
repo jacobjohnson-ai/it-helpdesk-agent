@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import worker, { searchKb, checkOutages, cleanTicket, validateHistory, runAgent, requesterProblems } from "../worker/worker.js";
+import worker, { workEmail, searchKb, checkOutages, cleanTicket, validateHistory, runAgent, requesterProblems } from "../worker/worker.js";
 
 test("knowledge base finds the right article", () => {
   assert.equal(searchKb("my VPN won't connect from home").articles[0].title, "VPN won't connect");
@@ -26,7 +26,7 @@ test("ticket arguments from the AI are validated", () => {
   assert.equal(t.priority_score, 5);
   assert.equal(t.category, "technical_issue");
   assert.ok(t.summary.length <= 200);
-  assert.equal(t.email, "visitor@example.com"); // never stores visitor personal info
+  assert.equal(t.email, "visitor@northwind.example"); // no name, no email
 });
 
 test("bad requests are rejected", () => {
@@ -57,6 +57,8 @@ test("agent uses tools and opens a ticket when needed", async () => {
   assert.equal(inserted.name, "Alex Rivera");
   assert.equal(inserted.department, "Sales");
   assert.equal(inserted.employee_id, "NW-10482");
+  assert.equal(inserted.email, "alex.rivera@northwind.example");
+  assert.equal(workEmail("Mary Ann O'Neil"), "mary.oneil@northwind.example");
   assert.match(out.reply, /#200/);
 });
 

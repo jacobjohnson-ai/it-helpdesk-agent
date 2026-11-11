@@ -37,7 +37,7 @@ Most helpdesk requests are the same handful of issues: Wi-Fi, VPN, passwords, pr
 - **Least privilege on the database.** The server key can only insert and read tickets (`grant select, insert`), not edit or delete them.
 - **Abuse limits.** Messages are capped at 600 characters, each visitor gets 4 messages per minute (Gemini's free tier allows 15 requests per minute in total) and a few tickets per hour, and only my website's address can call the Worker.
 - **Prompt injection.** The agent is told to treat user messages and tool results as data, not instructions, and not to make up phone numbers or contacts.
-- **No personal data.** The demo asks for made-up details only, never email or phone. Employee IDs must match `NW-12345`, and the database rejects anything else.
+- **No personal data.** The demo asks for made-up details only, never email or phone. The email is built from the name (`first.last@northwind.example`), a reserved domain that can never be real. Employee IDs must match `NW-12345`, and the database rejects anything else.
 - **Retries.** If Google is briefly busy, the agent retries once before showing an error.
 
 ## Tests
