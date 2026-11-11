@@ -131,7 +131,7 @@ function fold(){var n=P.steps.children.length;if(!n)return;P.steps.hidden=true;v
 function showRec(t){P.rec.hidden=false;P.rec.innerHTML='<b>Ticket #'+t.id+'</b>'+
  [['Requester',[t.name,t.department,t.employee_id].filter(Boolean).join(' · ')],['Urgency',t.urgency],['Priority',t.priority_score+'/10'],['Summary',t.summary]].filter(function(r){return r[1]}).map(function(r){return '<div><span>'+r[0]+'</span><em style="font-style:normal"'+(r[0]==='Summary'?' class="sum"':'')+'>'+esc(r[1])+'</em></div>'}).join('')}
 function simulate(note){P.sim.hidden=false;P.sims.innerHTML='';var s=[['ok','Assigned to Tier 1 technician'],['ok','In progress'],['go','Resolved',note||'Issue fixed and confirmed with the employee.']];
- var at=[900,2400,12400];s.forEach(function(x,i){setTimeout(function(){pstep(P.sims,x[0],x[1],x[2])},at[i])})}
+ var at=[900,2400,7400];s.forEach(function(x,i){setTimeout(function(){pstep(P.sims,x[0],x[1],x[2])},at[i])})}
 function send(text){text=text.trim();if(!text||busy)return;var t=document.getElementById('try');if(t)t.remove();document.querySelectorAll('.fill').forEach(function(e){e.remove()});
  busy=true;b.disabled=true;q.value='';add('You',text);hist.push({role:'user',text:text});
  var w=document.createElement('div');w.className='typing';w.textContent='Agent is working…';log.appendChild(w);log.scrollTop=log.scrollHeight;
