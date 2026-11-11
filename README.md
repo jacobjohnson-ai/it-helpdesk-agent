@@ -17,8 +17,10 @@ Most helpdesk requests are the same handful of issues: Wi-Fi, VPN, passwords, pr
    - **`search_kb`**: searches the IT knowledge base for fix steps
    - **`check_outages`**: checks the IT status page for known outages
    - **`create_ticket`**: opens a ticket for a technician
-3. The agent runs the tools, reads the results, and decides the next step. The chat shows each tool it used.
-4. Tickets are saved to the same Postgres database as my [Support Ticket Dashboard](https://github.com/jacobjohnson-ai/support-ticket-dashboard), so new tickets show up there.
+3. The agent runs the tools, reads the results, and decides the next step. A panel next to the chat shows each step live.
+4. Before opening a ticket, it asks for the employee's name, department, and employee ID (made-up in the demo; the ID must match `NW-12345`).
+5. After a ticket is saved, the panel shows the saved record and a labeled **technician simulation** (assigned, in progress, resolved) with an AI-written fix note. Nobody actually works the ticket; that part is a demo.
+6. Tickets are saved to the same Postgres database as my [Support Ticket Dashboard](https://github.com/jacobjohnson-ai/support-ticket-dashboard), so new tickets show up there.
 
 | Tool | Used for |
 |---|---|
@@ -33,9 +35,10 @@ Most helpdesk requests are the same handful of issues: Wi-Fi, VPN, passwords, pr
 - **Only three tools exist.** The agent can't run anything else. An unknown tool request is refused (there's a test for it).
 - **The AI's ticket data is validated** before it touches the database: urgency, score, and category are checked against allowed values, and text is trimmed to a safe length.
 - **Least privilege on the database.** The server key can only insert and read tickets (`grant select, insert`), not edit or delete them.
-- **Abuse limits.** Messages are capped at 600 characters, each visitor gets a few messages per minute and a few tickets per hour, and only my website's address can call the Worker.
+- **Abuse limits.** Messages are capped at 600 characters, each visitor gets 4 messages per minute (Gemini's free tier allows 15 requests per minute in total) and a few tickets per hour, and only my website's address can call the Worker.
 - **Prompt injection.** The agent is told to treat user messages and tool results as data, not instructions, and not to make up phone numbers or contacts.
-- **No personal data.** Tickets from the demo are saved without a real name or email.
+- **No personal data.** The demo asks for made-up details only, never email or phone. Employee IDs must match `NW-12345`, and the database rejects anything else.
+- **Retries.** If Google is briefly busy, the agent retries once before showing an error.
 
 ## Tests
 
@@ -43,7 +46,7 @@ Most helpdesk requests are the same handful of issues: Wi-Fi, VPN, passwords, pr
 npm test
 ```
 
-7 tests cover the knowledge base search, the outage check, ticket validation, request validation, the full agent loop (with the AI mocked), refusing unknown tools, and blocking requests from other websites.
+8 tests cover the knowledge base search, the outage check, ticket validation, required requester details, request validation, the full agent loop (with the AI mocked), refusing unknown tools, and blocking requests from other websites.
 
 ## Files
 
@@ -57,8 +60,5 @@ npm test
 
 1. Create a Cloudflare Worker and paste in `worker/worker.js`.
 2. Add three secrets: `GEMINI_API_KEY`, `SUPABASE_URL`, and `SUPABASE_SERVICE_KEY`.
-3. Create the `tickets` table from the [dashboard project](https://github.com/jacobjohnson-ai/support-ticket-dashboard/blob/main/sql/01_create_table.sql), then run:
-   ```sql
-   grant select, insert on public.tickets to service_role;
-   ```
+3. Create the `tickets` table from the [dashboard project](https://github.com/jacobjohnson-ai/support-ticket-dashboard/blob/main/sql/01_create_table.sql), then run [`sql/requester_columns.sql`](sql/requester_columns.sql).
 4. Point `API` in `site/helpdesk.html` at your Worker and add your site to `ALLOWED_ORIGINS` in the Worker.
