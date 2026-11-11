@@ -141,6 +141,11 @@ function send(text){text=text.trim();if(!text||busy)return;var t=document.getEle
   add('Agent',x.j.reply,x.j.tools);panel(x.j);hist.push({role:'model',text:x.j.reply});if(x.j.needs_details||/employee\s*id/i.test(x.j.reply||''))fills()})
  .catch(function(){w.remove();hist.pop();add('Agent','The agent is unavailable right now. Please try again in a minute.')})
  .finally(function(){busy=false;b.disabled=false;q.focus()})}
+
+// Lazy-friendly: focus the box on open, on any click, and on any typing
+setTimeout(function(){q.focus()},50);
+document.addEventListener('click',function(e){if(e.target.closest('a,button,input,textarea,select'))return;if(String(window.getSelection())) return;q.focus()});
+document.addEventListener('keydown',function(e){if(document.activeElement===q||e.ctrlKey||e.metaKey||e.altKey)return;if(e.key.length===1||e.key==='Backspace'){q.focus()}});
 document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();send(q.value)});
 document.querySelectorAll('#try a').forEach(function(a){a.addEventListener('click',function(){send(a.textContent)})});
 </script>
