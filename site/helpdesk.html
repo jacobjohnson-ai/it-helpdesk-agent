@@ -102,8 +102,13 @@ function add(who,text,tools){var d=document.createElement('div');d.className='ms
  var h='<div class="who">'+who+'</div>';
  if(false&&tools&&tools.length){h+='<div class="steps">'+tools.map(function(t){var f=STEP[t.name];var s=f?f(t.args,t.result):t.name;return '<div'+(t.name==='create_ticket'&&t.result&&t.result.created?' class="tk"':'')+'>'+esc(s)+'</div>'}).join('')+'</div>'}
  h+='<div class="txt">'+fmt(text)+'</div>';d.innerHTML=h;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
-var DEMO=[['Alex Rivera','Sales','NW-10482'],['Priya Shah','Finance','NW-20517'],['Marcus Lee','Operations','NW-30944']];
-function fills(){var d=document.createElement('div');d.className='try fill';d.innerHTML='Use made-up details: '+DEMO.map(function(p,i){return '<a data-i="'+i+'">'+p.join(', ')+'</a>'}).join(' · ')+'<br><span>Or type your own. Employee IDs look like NW-12345. Departments: Sales, Finance, Marketing, Operations, HR, IT.</span>';
+var FIRST=['Alex','Jordan','Taylor','Morgan','Casey','Riley','Jamie','Avery','Quinn','Drew','Sam','Chris','Pat','Dana','Robin','Jesse','Cameron','Logan','Reese','Hayden','Emerson','Rowan','Blake','Parker','Skyler','Kendall','Devon','Shawn','Kerry','Lee'];
+var LAST=['Smith','Johnson','Brown','Miller','Davis','Garcia','Wilson','Moore','Taylor','Anderson','Thomas','Jackson','White','Harris','Martin','Thompson','Clark','Lewis','Walker','Hall','Allen','Young','King','Wright','Scott','Green','Baker','Adams','Nelson','Carter'];
+var DEPTS=['Sales','Finance','Marketing','Operations','HR','IT'];
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function demoPeople(){var out=[],seen={};while(out.length<3){var n=pick(FIRST)+' '+pick(LAST);if(seen[n])continue;seen[n]=1;out.push([n,pick(DEPTS),'NW-'+(10000+Math.floor(Math.random()*90000))])}return out}
+var DEMO=demoPeople();
+function fills(){DEMO=demoPeople();var d=document.createElement('div');d.className='try fill';d.innerHTML='Use made-up details: '+DEMO.map(function(p,i){return '<a data-i="'+i+'">'+p.join(', ')+'</a>'}).join(' · ')+'<br><span>Or type your own. Employee IDs look like NW-12345. Departments: Sales, Finance, Marketing, Operations, HR, IT.</span>';
  log.appendChild(d);log.scrollTop=log.scrollHeight;
  d.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){var p=DEMO[a.dataset.i];d.remove();send('Name: '+p[0]+', Department: '+p[1]+', Employee ID: '+p[2])})})}
 
@@ -126,7 +131,7 @@ function send(text){text=text.trim();if(!text||busy)return;var t=document.getEle
  fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-14)})})
  .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
  .then(function(x){w.remove();if(!x.ok){add('Agent',x.j.error||'Something went wrong.');hist.pop();return}
-  add('Agent',x.j.reply,x.j.tools);panel(x.j);hist.push({role:'model',text:x.j.reply});if(x.j.needs_details)fills()})
+  add('Agent',x.j.reply,x.j.tools);panel(x.j);hist.push({role:'model',text:x.j.reply});if(x.j.needs_details||/employee\s*id/i.test(x.j.reply||''))fills()})
  .catch(function(){w.remove();hist.pop();add('Agent','The agent is unavailable right now. Please try again in a minute.')})
  .finally(function(){busy=false;b.disabled=false;q.focus()})}
 document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();send(q.value)});
