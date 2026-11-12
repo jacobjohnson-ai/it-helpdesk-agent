@@ -251,7 +251,7 @@ export const GENERAL_STEPS = [
 
 export const OUTAGES = [
   { service: "vpn", status: "degraded", location: "All remote users", note: "VPN sign-ins are slow. Engineers are working on it; expect a fix within 2 hours." },
-  { service: "printer", status: "down", location: "Sterling office, 2nd floor", note: "Printer FL2-Main is waiting on a repair part. Use FL2-Copy for now." },
+  { service: "printer", status: "down", location: "Downtown LA office, 2nd floor", note: "Printer FL2-Main is waiting on a repair part. Use FL2-Copy for now." },
 ];
 
 // ---------------------------------------------------------------------------
