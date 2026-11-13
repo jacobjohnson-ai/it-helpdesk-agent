@@ -13,7 +13,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;line-height:1.55}
 @media(min-width:2200px){body{zoom:1.15}}
-::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--card);margin:16px 0}::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:8px;border:3px solid var(--card)}::-webkit-scrollbar-button{display:none;width:0;height:0}
+
 html,body{height:100%}.wrap{width:90%;max-width:1200px;margin:0 auto;padding:0 24px 24px;display:flex;flex-direction:column;height:100vh}header,nav,form,.note{flex:none}
 nav{display:flex;justify-content:space-between;padding:18px 0 8px}nav a{color:var(--mute);text-decoration:none;font-size:15px}nav a:hover{color:var(--ink)}
 header{padding:20px 0 18px}
@@ -69,6 +69,7 @@ button:disabled{opacity:.5;cursor:default}
 .psteps{gap:7px}
 .msg{max-width:82%}.msg.you{align-self:flex-end;text-align:right;max-width:70%}.msg.you .who{color:var(--mute)}.msg.you .txt{color:#fff;font-weight:500}.msg.agent .txt{color:#c8c8c8}.log{gap:22px}
 h1 .demo{font-size:15px;font-weight:400;color:var(--dim);letter-spacing:0;margin-left:6px;vertical-align:middle}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent;margin:12px 0}::-webkit-scrollbar-thumb{background:#fff;border-radius:4px}::-webkit-scrollbar-button{display:none;width:0;height:0}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:#fff transparent}}
 </style>
 </head>
 <body>
