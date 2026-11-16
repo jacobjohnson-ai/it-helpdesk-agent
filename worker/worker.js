@@ -612,6 +612,15 @@ export async function runAgent(env, history, ip, deps = {}) {
           try {
             const row = cleanTicket(call.args, userText);
             if (user) Object.assign(row, { requester_id: user.id, name: user.full_name, email: workEmail(user.full_name), department: user.department, employee_id: null });
+            else {
+              // Public page: if the name matches a demo account (e.g. Meagan Moore), file it under that account
+              // so it shows in their "My tickets" in the service desk app.
+              try {
+                const q = await fetch(`${sbBase(env)}/rest/v1/profiles?full_name=ilike.${encodeURIComponent(row.name)}&role=eq.employee&select=id&limit=1`, { headers: sbHeaders(env) });
+                const hit = q.ok ? (await q.json())[0] : null;
+                if (hit) row.requester_id = hit.id;
+              } catch {}
+            }
             const saved = await insert(env, row);
             ticket = { id: saved.id, name: saved.name, department: saved.department, employee_id: saved.employee_id,
                        urgency: saved.urgency, priority_score: saved.priority_score, summary: saved.summary };
