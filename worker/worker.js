@@ -18,8 +18,8 @@ const ALLOWED_ORIGINS = [
 const MAX_MESSAGE_CHARS = 600;
 const MAX_TURNS = 14;            // messages kept per conversation
 const MAX_TOOL_STEPS = 4;        // tool calls per reply
-const RATE_LIMIT_PER_MIN = 4;    // messages per visitor per minute (Gemini free tier allows 15 requests/min total)
-const TICKETS_PER_HOUR = 3;      // tickets per visitor per hour
+const RATE_LIMIT_PER_MIN = 10;   // messages per visitor per minute
+const TICKETS_PER_HOUR = 10;     // tickets per visitor per hour
 
 // ---------------------------------------------------------------------------
 // Knowledge base and status page (a fictional company, "Northwind")
