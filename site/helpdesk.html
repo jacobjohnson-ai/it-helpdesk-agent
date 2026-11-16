@@ -111,11 +111,11 @@ function add(who,text,tools){var d=document.createElement('div');d.className='ms
  var h='<div class="who">'+who+'</div>';
  if(false&&tools&&tools.length){h+='<div class="steps">'+tools.map(function(t){var f=STEP[t.name];var s=f?f(t.args,t.result):t.name;return '<div'+(t.name==='create_ticket'&&t.result&&t.result.created?' class="tk"':'')+'>'+esc(s)+'</div>'}).join('')+'</div>'}
  h+='<div class="txt">'+fmt(text)+'</div>';d.innerHTML=h;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
-var FIRST=['Alex','Jordan','Taylor','Morgan','Casey','Riley','Jamie','Avery','Quinn','Drew','Sam','Chris','Pat','Dana','Robin','Jesse','Cameron','Logan','Reese','Hayden','Emerson','Rowan','Blake','Parker','Skyler','Kendall','Devon','Shawn','Kerry','Lee'];
+var FIRST=['Emily','Sarah','Jessica','Lauren','Rachel','Kayla','Brittany','Amanda','Nicole','Hannah','Tyler','Jason','Kevin','Marcus','Brandon','Ryan','Eric','Chris','Nathan','Josh','Daniel','Michael','David','Matt','Ashley','Megan','Courtney','Alyssa','Vanessa','Kelsey'];
 var LAST=['Smith','Johnson','Brown','Miller','Davis','Garcia','Wilson','Moore','Taylor','Anderson','Thomas','Jackson','White','Harris','Martin','Thompson','Clark','Lewis','Walker','Hall','Allen','Young','King','Wright','Scott','Green','Baker','Adams','Nelson','Carter'];
 var DEPTS=['Sales','Finance','Marketing','Operations','HR','IT'];
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
-function demoPeople(){var out=[],seen={};while(out.length<3){var n=pick(FIRST)+' '+pick(LAST);if(seen[n])continue;seen[n]=1;out.push([n,pick(DEPTS),'NW-'+(10000+Math.floor(Math.random()*90000))])}return out}
+function demoPeople(){var out=[['Meagan Moore','Sales','NW-'+(10000+Math.floor(Math.random()*90000))]],seen={'Meagan Moore':1};while(out.length<3){var n=pick(FIRST)+' '+pick(LAST);if(seen[n])continue;seen[n]=1;out.push([n,pick(DEPTS),'NW-'+(10000+Math.floor(Math.random()*90000))])}return out}
 var DEMO=demoPeople();
 function fills(){DEMO=demoPeople();var d=document.createElement('div');d.className='try fill';d.innerHTML='Use made-up details: '+DEMO.map(function(p,i){return '<a data-i="'+i+'">'+p.join(', ')+'</a>'}).join(' · ')+'<br><span>Or type your own. Employee IDs look like NW-12345. Departments: Sales, Finance, Marketing, Operations, HR, IT.</span>';
  log.appendChild(d);log.scrollTop=log.scrollHeight;
