@@ -53,7 +53,7 @@ test("agent uses tools and opens a ticket when needed", async () => {
   assert.deepEqual(out.tools.map((t) => t.name), ["search_kb", "check_outages", "create_ticket"]);
   assert.equal(out.ticket.id, 200);
   assert.equal(inserted.urgency, "medium");
-  assert.equal(inserted.message, "My VPN won't connect → still broken. Alex Rivera, Sales, nw-10482"); // whole conversation
+  assert.equal(inserted.message, "VPN fails after restart"); // clean description, not the chat transcript
   assert.equal(inserted.name, "Alex Rivera");
   assert.equal(inserted.department, "Sales");
   assert.equal(inserted.employee_id, "NW-10482");

@@ -288,6 +288,7 @@ const TOOL_DECLARATIONS = [
         category: { type: "string", enum: ["technical_issue", "general"] },
         urgency: { type: "string", enum: ["low", "medium", "high"] },
         priority_score: { type: "integer", description: "1 to 10" },
+        details: { type: "string", description: "1-2 plain sentences for the technician describing the problem, like \"Keyboard stopped typing this morning on a Dell laptop; no keys respond.\" No names, IDs, or chat transcript." },
         steps_tried: { type: "string", description: "The specific steps the user tried, like \"Plugged in charger, raised brightness, restarted\". Empty string if they tried nothing." },
         requester_name: { type: "string", description: "The employee's name, as they gave it" },
         department: { type: "string", enum: DEPARTMENTS },
@@ -373,7 +374,7 @@ export function cleanTicket(args, userText) {
     email: workEmail(args?.requester_name), // built from the name; .example can never be a real address
     department: DEPARTMENTS.includes(args?.department) ? args.department : null,
     employee_id: String(args?.employee_id || "").trim().toUpperCase() || null,
-    message: clip(userText, 600),
+    message: clip(args?.details, 600) || summary,
     category: cat,
     urgency: urg,
     priority_score: score,
