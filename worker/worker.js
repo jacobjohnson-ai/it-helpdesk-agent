@@ -284,11 +284,11 @@ const TOOL_DECLARATIONS = [
     parameters: {
       type: "object",
       properties: {
-        summary: { type: "string", description: "One sentence describing the problem" },
+        summary: { type: "string", description: "Short title of the actual problem in plain words, like \"Laptop screen not turning on\". Name the device and symptom. Never generic text like \"issue unresolved\"." },
         category: { type: "string", enum: ["technical_issue", "general"] },
         urgency: { type: "string", enum: ["low", "medium", "high"] },
         priority_score: { type: "integer", description: "1 to 10" },
-        steps_tried: { type: "string", description: "What the user already tried" },
+        steps_tried: { type: "string", description: "The specific steps the user tried, like \"Plugged in charger, raised brightness, restarted\". Empty string if they tried nothing." },
         requester_name: { type: "string", description: "The employee's name, as they gave it" },
         department: { type: "string", enum: DEPARTMENTS },
         employee_id: { type: "string", description: "Format NW-12345" },
@@ -345,6 +345,11 @@ export function requesterProblems(args, userText = "") {
   return out;
 }
 
+// "meagan moore" -> "Meagan Moore"
+export function titleCase(n) {
+  return String(n || "").toLowerCase().replace(/(^|[\s'-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+}
+
 // "Alex Rivera" -> "alex.rivera@northwind.example" (never ask visitors for a real email)
 export function workEmail(name) {
   const parts = String(name || "").toLowerCase().normalize("NFKD").replace(/[^a-z\s'-]/g, "").replace(/['-]/g, "").trim().split(/\s+/).filter(Boolean);
@@ -363,7 +368,7 @@ export function cleanTicket(args, userText) {
   const summary = clip(args?.summary, 200) || "IT issue reported through the helpdesk agent.";
   const tried = clip(args?.steps_tried, 300);
   return {
-    name: clip(args?.requester_name, 60) || "Helpdesk Agent visitor",
+    name: titleCase(clip(args?.requester_name, 60)) || "Helpdesk Agent visitor",
     email: workEmail(args?.requester_name), // built from the name; .example can never be a real address
     department: DEPARTMENTS.includes(args?.department) ? args.department : null,
     employee_id: String(args?.employee_id || "").trim().toUpperCase() || null,

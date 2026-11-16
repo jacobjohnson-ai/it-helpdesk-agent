@@ -162,3 +162,9 @@ test("wrong-length employee ID gets a specific message", () => {
   const p = requesterProblems({ requester_name: "Meagan Moore", department: "Sales", employee_id: "NW-215129" }, "meagan moore sales NW-215129");
   assert.ok(p[0].includes('"NW-215129" has 6 digits'));
 });
+
+test("requester name is capitalized", async () => {
+  const { titleCase } = await import("../worker/worker.js");
+  assert.equal(titleCase("meagan moore"), "Meagan Moore");
+  assert.equal(titleCase("mary-kate o'neil"), "Mary-Kate O'Neil");
+});
