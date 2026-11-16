@@ -109,10 +109,10 @@ export const KB = [
     id: "display", title: "Screen or monitor problems",
     keywords: ["screen", "monitor", "display", "black", "flicker", "flickering", "dock", "docking", "resolution", "projector", "hdmi"],
     steps: [
-      "Check the monitor's power and that the cable is firmly plugged in at both ends.",
-      "Press Windows + P and pick \"Extend\" or \"Duplicate\".",
-      "If you use a dock, unplug it for 10 seconds and plug it back in.",
-      "If the laptop screen is cracked, black, or lined, it needs a hardware repair.",
+      "Laptop screen: plug in the charger, then turn the brightness up with the brightness keys (often Fn + F-keys).",
+      "If the screen stays black, hold the power button for 15 seconds, then turn the laptop back on.",
+      "External monitor: check its power and that the cable is firmly plugged in at both ends, then press Windows + P and pick \"Extend\" or \"Duplicate\".",
+      "If the screen is cracked, has lines, or stays black after a restart, it needs a hardware repair.",
     ],
   },
   {
@@ -335,7 +335,13 @@ export function requesterProblems(args, userText = "") {
   const id = String(args?.employee_id || "").trim().toUpperCase();
   if (!/^[A-Za-z][A-Za-z .'-]{1,59}$/.test(name) || !said.includes(name.toLowerCase())) out.push("name");
   if (!DEPARTMENTS.includes(args?.department) || !said.includes(String(args.department).toLowerCase())) out.push("department (one of: " + DEPARTMENTS.join(", ") + ")");
-  if (!/^NW-\d{5}$/.test(id) || !said.includes(id.toLowerCase())) out.push("employee ID (format NW-12345)");
+  if (!/^NW-\d{5}$/.test(id) || !said.includes(id.toLowerCase())) {
+    const typed = (String(userText).match(/NW-?\s*(\d+)/gi) || []).pop();
+    const digits = typed ? typed.replace(/\D/g, "").length : 0;
+    out.push(typed && digits !== 5
+      ? `employee ID: "${typed.toUpperCase()}" has ${digits} digits, but it needs exactly 5 digits after NW- (example: NW-12345)`
+      : "employee ID (format NW- followed by exactly 5 digits, example: NW-12345)");
+  }
   return out;
 }
 
@@ -393,7 +399,7 @@ How to work:
 - If the problem could be an outage (VPN, Wi-Fi, email, printer), also call check_outages.
 - Give the steps from the knowledge base, then ask if it worked.
 - Call create_ticket only if: the steps didn't work, the user asks for a person, the problem isn't in the knowledge base, or it's a security issue (clicked a phishing link, possible hack). Security issues are always urgency "high".
-- To open a ticket you need the employee's name, department, and employee ID, exactly as the user typed them. Never guess or fill in any of them. If you don't have them yet, call create_ticket anyway; it will tell you what to ask for. Ask for all missing details in one short message, and mention this is a demo so made-up details are fine. Don't ask for email or phone.
+- To open a ticket you need the employee's name, department, and employee ID, exactly as the user typed them. Never guess or fill in any of them. If you don't have them yet, call create_ticket anyway; it will tell you what to ask for. Ask for all missing details in one short message, and mention this is a demo so made-up details are fine. When create_ticket says a detail is invalid, repeat its explanation exactly; never state a different format. Don't ask for email or phone.
 - After creating a ticket, tell the user the ticket number and that a technician will follow up.
 
 Rules:

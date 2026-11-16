@@ -82,7 +82,7 @@ test("requester details are required and checked", async () => {
   const said = "my name is Alex Rivera, Sales, NW-10482";
   assert.deepEqual(requesterProblems({ requester_name: "Alex Rivera", department: "Sales", employee_id: "NW-10482" }, said), []);
   // the AI made up an ID the user never typed: blocked
-  assert.deepEqual(requesterProblems({ requester_name: "test name", department: "HR", employee_id: "NW-12345" }, "name: test name / department: HR"), ["employee ID (format NW-12345)"]);
+  assert.deepEqual(requesterProblems({ requester_name: "test name", department: "HR", employee_id: "NW-12345" }, "name: test name / department: HR"), ["employee ID (format NW- followed by exactly 5 digits, example: NW-12345)"]);
   assert.equal(requesterProblems({ requester_name: "Alex", department: "Legal", employee_id: "123-45-6789" }, "Alex, Legal, 123-45-6789").length, 2); // bad dept, SSN-looking ID
   const script = [
     { role: "model", parts: [{ functionCall: { name: "create_ticket", args: { summary: "Printer down", urgency: "low", priority_score: 3 } } }] },
@@ -156,4 +156,9 @@ test("search uses the database article list when given", () => {
   const kb = [{ id: "badge", title: "Door badge not working", keywords: ["badge", "door"], steps: ["Hold the badge flat."] }];
   assert.equal(searchKb("my badge won't open the door", null, kb).articles[0].title, "Door badge not working");
   assert.equal(searchKb("", "badge", kb).found, true);
+});
+
+test("wrong-length employee ID gets a specific message", () => {
+  const p = requesterProblems({ requester_name: "Meagan Moore", department: "Sales", employee_id: "NW-215129" }, "meagan moore sales NW-215129");
+  assert.ok(p[0].includes('"NW-215129" has 6 digits'));
 });
