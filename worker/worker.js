@@ -333,7 +333,8 @@ export function requesterProblems(args, userText = "") {
   const said = String(userText).toLowerCase();
   const name = String(args?.requester_name || "").trim();
   const id = String(args?.employee_id || "").trim().toUpperCase();
-  if (!/^[A-Za-z][A-Za-z .'-]{1,59}$/.test(name) || !said.includes(name.toLowerCase())) out.push("name");
+  if (!/^[A-Za-z][A-Za-z .'-]{1,59}$/.test(name) || !said.includes(name.toLowerCase())) out.push("full name (first and last)");
+  else if (name.split(/\s+/).length < 2) out.push(`last name: "${name}" is only a first name, so ask for their full name (first and last)`);
   if (!DEPARTMENTS.includes(args?.department) || !said.includes(String(args.department).toLowerCase())) out.push("department (one of: " + DEPARTMENTS.join(", ") + ")");
   if (!/^NW-\d{5}$/.test(id) || !said.includes(id.toLowerCase())) {
     const typed = (String(userText).match(/NW-?\s*(\d+)/gi) || []).pop();

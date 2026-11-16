@@ -83,7 +83,7 @@ test("requester details are required and checked", async () => {
   assert.deepEqual(requesterProblems({ requester_name: "Alex Rivera", department: "Sales", employee_id: "NW-10482" }, said), []);
   // the AI made up an ID the user never typed: blocked
   assert.deepEqual(requesterProblems({ requester_name: "test name", department: "HR", employee_id: "NW-12345" }, "name: test name / department: HR"), ["employee ID (format NW- followed by exactly 5 digits, example: NW-12345)"]);
-  assert.equal(requesterProblems({ requester_name: "Alex", department: "Legal", employee_id: "123-45-6789" }, "Alex, Legal, 123-45-6789").length, 2); // bad dept, SSN-looking ID
+  assert.equal(requesterProblems({ requester_name: "Alex", department: "Legal", employee_id: "123-45-6789" }, "Alex, Legal, 123-45-6789").length, 3); // first name only, bad dept, SSN-looking ID
   const script = [
     { role: "model", parts: [{ functionCall: { name: "create_ticket", args: { summary: "Printer down", urgency: "low", priority_score: 3 } } }] },
     { role: "model", parts: [{ text: "Can I get your name, department, and employee ID?" }] },
@@ -167,4 +167,9 @@ test("requester name is capitalized", async () => {
   const { titleCase } = await import("../worker/worker.js");
   assert.equal(titleCase("meagan moore"), "Meagan Moore");
   assert.equal(titleCase("mary-kate o'neil"), "Mary-Kate O'Neil");
+});
+
+test("first name only asks for last name", () => {
+  const p = requesterProblems({ requester_name: "Meagan", department: "Sales", employee_id: "NW-11111" }, "meagan sales NW-11111");
+  assert.ok(p.length === 1 && p[0].startsWith("last name"));
 });
