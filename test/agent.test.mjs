@@ -173,3 +173,11 @@ test("first name only asks for last name", () => {
   const p = requesterProblems({ requester_name: "Meagan", department: "Sales", employee_id: "NW-11111" }, "meagan sales NW-11111");
   assert.ok(p.length === 1 && p[0].startsWith("last name"));
 });
+
+test("incoming demo tickets look realistic", async () => {
+  const { makeIncoming } = await import("../worker/incoming.js");
+  for (let i = 0; i < 20; i++) {
+    const t = makeIncoming();
+    assert.ok(t.name.includes(" ") && /^NW-\d{5}$/.test(t.employee_id) && t.message && t.summary);
+  }
+});

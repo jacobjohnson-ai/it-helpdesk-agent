@@ -6,3 +6,7 @@ workers_dev = true
 
 [observability]
 enabled = true
+
+# New demo tickets arrive every 3 hours (worker/incoming.js)
+[triggers]
+crons = ["23 */3 * * *"]

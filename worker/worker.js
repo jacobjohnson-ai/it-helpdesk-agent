@@ -673,6 +673,10 @@ export function validateHistory(body) {
 }
 
 export default {
+  async scheduled(event, env, ctx) {
+    const { runIncoming } = await import("./incoming.js");
+    ctx.waitUntil(runIncoming(env).catch((e) => console.error("incoming error", String(e))));
+  },
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
     const headers = cors(origin);
