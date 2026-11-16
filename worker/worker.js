@@ -275,8 +275,8 @@ const TOOL_DECLARATIONS = [
   },
   {
     name: "check_ticket",
-    description: "Look up an existing ticket by its number when the user asks about a ticket's status or details.",
-    parameters: { type: "object", properties: { ticket_number: { type: "integer" } }, required: ["ticket_number"] },
+    description: "Look up the user's tickets. Pass ticket_number for one ticket. Leave it out when the user asks about their latest, open, or recent tickets; it then returns their 5 most recent tickets (signed-in users only).",
+    parameters: { type: "object", properties: { ticket_number: { type: "integer" } } },
   },
   {
     name: "create_ticket",
@@ -601,7 +601,14 @@ export async function runAgent(env, history, ip, deps = {}) {
       else if (call.name === "check_outages") result = checkOutages(call.args?.service);
       else if (call.name === "check_ticket") {
         const n = Number.parseInt(call.args?.ticket_number, 10);
-        if (!Number.isInteger(n) || n < 1) result = { found: false, message: "That isn't a valid ticket number." };
+        if ((!Number.isInteger(n) || n < 1) && user) {
+          try {
+            const r = await fetch(`${sbBase(env)}/rest/v1/tickets?requester_id=eq.${user.id}&order=id.desc&limit=5&select=id,created_at,category,urgency,priority_score,summary,department,status,requester_id,assigned_to,first_response_at`, { headers: sbHeaders(env) });
+            const rows = r.ok ? await r.json() : [];
+            result = rows.length ? { tickets: rows.map((row) => ticketStatus(row)) } : { found: false, message: "This user has no tickets." };
+          } catch { result = { error: "The ticket system is unavailable right now." }; }
+        }
+        else if (!Number.isInteger(n) || n < 1) result = { found: false, message: "Ask the user for their ticket number." };
         else { try { const row = await lookup(env, n); result = ticketStatus(user && row && row.requester_id !== user.id ? null : row); } catch { result = { error: "The ticket system is unavailable right now." }; } }
       }
       else if (call.name === "create_ticket") {
